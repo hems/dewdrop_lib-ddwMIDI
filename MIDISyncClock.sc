@@ -18,9 +18,13 @@ MIDISyncClock {
 		responseFuncs = IdentityDictionary[
 				// tick
 			8 -> { |data|
+
 				var	lastTickDelta, nextTime, task, tickIndex;
-					// use nextTime as temp var to calculate tempo
-					// this is inherently inaccurate; tempo will fluctuate slightly around base
+
+				// use nextTime as temp var to calculate tempo
+				// this is inherently inaccurate
+				// tempo will fluctuate slightly around base
+
 				nextTime = Main.elapsedTime;
 				lastTickDelta = nextTime - (lastTickTime ? 0);
 				lastTickTime = nextTime;
@@ -29,22 +33,30 @@ MIDISyncClock {
 				ticks = ticks + 1;
 				beats = ticks / ticksPerBeat;
 				
-					// while loop needed because more than one thing may be scheduled for this tick
+				// while loop needed because more 
+				// than one thing may be scheduled for this tick
+				
 				{ (queue.topPriority ?? { inf }) < ticks }.while({
 						// perform the action, and check if it should be rescheduled
 					(nextTime = (task = queue.pop).value(beats)).isNumber.if({
 						this.sched(nextTime, task, -1)
 					});
 				});
+
+				this.changed( \tick, ticks );
 			},
 				// start -- scheduler should be clear first
 			10 -> { |data|
 				startTime = lastTickTime = Main.elapsedTime;
 				ticks = beats = baseBar = baseBarBeat = 0;
+
+				this.changed( \start, Main.elapsedTime );
 			},
 				// stop
 			12 -> { |data|
 				this.clear;
+				
+				this.changed( \stop, Main.elapsedTime );
 			}
 		];
 	}
